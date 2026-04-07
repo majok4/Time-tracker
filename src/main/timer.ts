@@ -6,6 +6,7 @@ import {
   getActiveSession
 } from './db/queries/sessions'
 import type { CreateSessionData } from '../shared/types'
+import { updateTray } from './tray'
 
 interface ActiveTimer {
   session: Session
@@ -40,6 +41,7 @@ function startTicking(session: Session): void {
       elapsed: activeTimer.elapsed,
       session: activeTimer.session
     })
+    updateTray()
   }, 1000)
 
   activeTimer = {

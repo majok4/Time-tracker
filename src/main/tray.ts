@@ -7,7 +7,6 @@ import { startTimer } from './timer'
 
 let tray: Tray | null = null
 let mainWindow: BrowserWindow | null = null
-let updateThrottleId: NodeJS.Timeout | null = null
 
 function formatMs(ms: number): string {
   const totalSecs = Math.floor(ms / 1000)
@@ -17,6 +16,15 @@ function formatMs(ms: number): string {
   if (hours > 0) return `${hours}h ${mins}m`
   if (mins > 0) return `${mins}m ${secs}s`
   return `${secs}s`
+}
+
+function formatMmSs(ms: number): string {
+  const totalSecs = Math.floor(ms / 1000)
+  const hours = Math.floor(totalSecs / 3600)
+  const mins = Math.floor((totalSecs % 3600) / 60)
+  const secs = totalSecs % 60
+  if (hours > 0) return `${hours}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
 }
 
 function buildContextMenu(): Electron.Menu {
@@ -129,27 +137,24 @@ export function createTray(win: BrowserWindow): Tray {
 
 export function updateTray(): void {
   if (!tray) return
-  if (updateThrottleId) return
 
-  updateThrottleId = setTimeout(() => {
-    buildAndSetMenu()
+  buildAndSetMenu()
 
-    const timerState = getTimerState()
-    const focusState = getFocusState()
+  const timerState = getTimerState()
+  const focusState = getFocusState()
+  const projects = getAllProjects()
 
-    let title = ''
-    if (focusState.active) {
-      title = `⏱ ${formatMs(focusState.remaining)}`
-    } else if (timerState.active) {
-      title = formatMs(timerState.elapsed)
-    }
+  let title = ''
+  if (focusState.active) {
+    title = `⏱ ${formatMmSs(focusState.remaining)}`
+  } else if (timerState.active && timerState.session) {
+    const project = projects.find((p) => p.id === timerState.session!.projectId)
+    title = `● ${project?.name ?? 'Unknown'} ${formatMmSs(timerState.elapsed)}`
+  }
 
-    if (tray && process.platform === 'darwin') {
-      tray.setTitle(title)
-    }
-
-    updateThrottleId = null
-  }, 5000)
+  if (process.platform === 'darwin') {
+    tray.setTitle(title)
+  }
 }
 
 export function destroyTray(): void {

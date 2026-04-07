@@ -3,8 +3,8 @@ import { ChevronLeft, ChevronRight, Download } from 'lucide-react'
 import { format, addWeeks, subWeeks, startOfWeek, addDays } from 'date-fns'
 import { useAppStore } from '../store'
 import api from '../lib/api'
-import type { WeeklyReport } from '../../../shared/types'
-import { formatMsLong, formatDate } from '../lib/utils'
+import type { WeeklyReport, Session } from '../../../shared/types'
+import { formatMsLong, formatDate, formatMs } from '../lib/utils'
 import Button from '../components/ui/Button'
 import {
   BarChart,
@@ -15,8 +15,7 @@ import {
   ResponsiveContainer,
   Cell,
   PieChart,
-  Pie,
-  Legend
+  Pie
 } from 'recharts'
 
 export default function Reports(): JSX.Element {
@@ -26,13 +25,21 @@ export default function Reports(): JSX.Element {
     return format(d, 'yyyy-MM-dd')
   })
   const [report, setReport] = useState<WeeklyReport | null>(null)
+  const [sessions, setSessions] = useState<Session[]>([])
   const [loading, setLoading] = useState(true)
   const [exporting, setExporting] = useState(false)
 
   const loadReport = useCallback(async () => {
     setLoading(true)
-    const r = await api.getWeeklyReport(weekStart)
+    const start = new Date(weekStart + 'T00:00:00')
+    const end = addDays(start, 6)
+    end.setHours(23, 59, 59, 999)
+    const [r, s] = await Promise.all([
+      api.getWeeklyReport(weekStart),
+      api.getSessions({ startDate: start.getTime(), endDate: end.getTime() })
+    ])
     setReport(r)
+    setSessions(s)
     setLoading(false)
   }, [weekStart])
 
@@ -198,29 +205,50 @@ export default function Reports(): JSX.Element {
             <h2 className="text-sm font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
               Breakdown
             </h2>
-            <div className="space-y-2.5">
-              {report.byProject.map((p) => (
-                <div key={p.projectId}>
-                  <div className="flex justify-between text-xs mb-1">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full" style={{ background: p.color }} />
-                      <span style={{ color: 'var(--text-secondary)' }}>{p.projectName}</span>
+            <div className="space-y-3">
+              {report.byProject.map((p) => {
+                const goalMs = p.goalHours ? p.goalHours * 3600000 : null
+                const goalPct = goalMs ? Math.min(100, Math.round((p.totalMs / goalMs) * 100)) : null
+                return (
+                  <div key={p.projectId}>
+                    <div className="flex justify-between text-xs mb-1">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full" style={{ background: p.color }} />
+                        <span style={{ color: 'var(--text-secondary)' }}>{p.projectName}</span>
+                      </div>
+                      <div className="flex gap-2 items-center">
+                        {goalMs && (
+                          <span style={{ color: 'var(--text-muted)' }}>
+                            {formatMsLong(p.totalMs)} / {p.goalHours}h {p.goalPeriod}
+                          </span>
+                        )}
+                        {!goalMs && (
+                          <>
+                            <span style={{ color: 'var(--text-muted)' }}>{p.percentage}%</span>
+                            <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
+                              {formatMsLong(p.totalMs)}
+                            </span>
+                          </>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex gap-2">
-                      <span style={{ color: 'var(--text-muted)' }}>{p.percentage}%</span>
-                      <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
-                        {formatMsLong(p.totalMs)}
-                      </span>
+                    <div className="h-1.5 rounded-full" style={{ background: 'var(--bg-tertiary)' }}>
+                      <div
+                        className="h-full rounded-full"
+                        style={{
+                          width: `${goalPct ?? p.percentage}%`,
+                          background: goalPct !== null && goalPct >= 100 ? '#22c55e' : p.color
+                        }}
+                      />
                     </div>
+                    {goalPct !== null && (
+                      <p className="text-xs mt-0.5" style={{ color: goalPct >= 100 ? '#22c55e' : 'var(--text-muted)' }}>
+                        {goalPct >= 100 ? 'Goal reached!' : `${goalPct}% of goal`}
+                      </p>
+                    )}
                   </div>
-                  <div className="h-1.5 rounded-full" style={{ background: 'var(--bg-tertiary)' }}>
-                    <div
-                      className="h-full rounded-full"
-                      style={{ width: `${p.percentage}%`, background: p.color }}
-                    />
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         </div>
@@ -235,6 +263,46 @@ export default function Reports(): JSX.Element {
           <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
             No time tracked this week
           </p>
+        </div>
+      )}
+
+      {/* Sessions table */}
+      {!loading && sessions.length > 0 && (
+        <div
+          className="rounded-2xl border overflow-hidden"
+          style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)' }}
+        >
+          <div className="px-5 py-4 border-b" style={{ borderColor: 'var(--border)' }}>
+            <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+              Sessions ({sessions.length})
+            </h2>
+          </div>
+          <div className="divide-y" style={{ borderColor: 'var(--border)' }}>
+            {sessions.map((s) => {
+              const project = projects.find((p) => p.id === s.projectId)
+              return (
+                <div key={s.id} className="flex items-center gap-3 px-5 py-3 text-sm">
+                  <div className="w-2 h-2 rounded-full shrink-0" style={{ background: project?.color ?? '#666' }} />
+                  <div className="flex-1 min-w-0">
+                    <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
+                      {project?.name ?? 'Unknown'}
+                    </span>
+                    {s.title && (
+                      <span className="ml-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+                        {s.title}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs shrink-0" style={{ color: 'var(--text-muted)' }}>
+                    {format(new Date(s.startedAt), 'EEE d MMM, HH:mm')}
+                  </span>
+                  <span className="text-xs font-medium tabular-nums shrink-0" style={{ color: 'var(--text-primary)' }}>
+                    {formatMs(s.duration ?? 0)}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
         </div>
       )}
     </div>

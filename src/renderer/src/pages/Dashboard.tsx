@@ -256,11 +256,18 @@ export default function Dashboard(): JSX.Element {
               const project = projects.find((p) => p.id === s.projectId)
               return (
                 <div key={s.id} className="flex items-center gap-3 py-1.5 text-sm">
-                  <div className="w-2 h-2 rounded-full shrink-0" style={{ background: project?.color ?? '#666' }} />
-                  <span className="flex-1 truncate" style={{ color: 'var(--text-primary)' }}>
-                    {project?.name ?? 'Unknown'}
-                  </span>
-                  <span style={{ color: 'var(--text-muted)' }}>{formatTime(s.startedAt)}</span>
+                  <div className="w-2 h-2 rounded-full shrink-0 mt-0.5" style={{ background: project?.color ?? '#666' }} />
+                  <div className="flex-1 min-w-0">
+                    <p className="truncate" style={{ color: 'var(--text-primary)' }}>
+                      {project?.name ?? 'Unknown'}
+                    </p>
+                    {s.title && (
+                      <p className="truncate text-xs" style={{ color: 'var(--text-muted)' }}>
+                        {s.title}
+                      </p>
+                    )}
+                  </div>
+                  <span className="shrink-0" style={{ color: 'var(--text-muted)' }}>{formatTime(s.startedAt)}</span>
                   <Badge
                     label={formatMsLong(s.duration ?? 0)}
                     color={project?.color ?? '#666'}
