@@ -5,9 +5,11 @@ import type { DailyReport, WeeklyReport, ProjectStat, DayStat, ReportFilters } f
 import { writeFileSync } from 'fs'
 import { format } from 'date-fns'
 
+import type { Project } from '../../shared/types'
+
 function buildProjectStats(
   totals: Array<{ projectId: string; totalMs: number }>,
-  projects: Array<{ id: string; name: string; color: string }>
+  projects: Project[]
 ): ProjectStat[] {
   const grandTotal = totals.reduce((s, t) => s + t.totalMs, 0)
   return totals.map((t) => {
@@ -17,7 +19,9 @@ function buildProjectStats(
       projectName: project?.name ?? 'Unknown',
       color: project?.color ?? '#6366F1',
       totalMs: t.totalMs,
-      percentage: grandTotal > 0 ? Math.round((t.totalMs / grandTotal) * 100) : 0
+      percentage: grandTotal > 0 ? Math.round((t.totalMs / grandTotal) * 100) : 0,
+      goalHours: project?.goalHours ?? null,
+      goalPeriod: project?.goalPeriod ?? null
     }
   })
 }
@@ -91,15 +95,16 @@ export function registerReportHandlers(): void {
     const projects = getAllProjects(true)
     const projectMap = new Map(projects.map((p) => [p.id, p]))
 
-    const header = 'Date,Start Time,End Time,Duration (min),Project,Source,Notes'
+    const header = 'Date,Start Time,End Time,Duration (min),Project,Title,Source,Notes'
     const rows = sessions.map((s) => {
       const project = projectMap.get(s.projectId)
       const startDate = format(new Date(s.startedAt), 'yyyy-MM-dd')
       const startTime = format(new Date(s.startedAt), 'HH:mm:ss')
       const endTime = s.endedAt ? format(new Date(s.endedAt), 'HH:mm:ss') : ''
       const durationMins = s.duration ? Math.round(s.duration / 60000) : ''
+      const title = (s.title ?? '').replace(/,/g, ';')
       const notes = (s.notes ?? '').replace(/,/g, ';')
-      return `${startDate},${startTime},${endTime},${durationMins},${project?.name ?? 'Unknown'},${s.source},${notes}`
+      return `${startDate},${startTime},${endTime},${durationMins},${project?.name ?? 'Unknown'},${title},${s.source},${notes}`
     })
 
     const csv = [header, ...rows].join('\n')

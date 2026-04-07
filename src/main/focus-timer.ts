@@ -2,6 +2,7 @@ import { BrowserWindow, Notification } from 'electron'
 import type { FocusSession, FocusState, StartFocusConfig } from '../shared/types'
 import { createFocusSession, completeFocusSession, cancelFocusSession } from './db/queries/focus'
 import { startTimer, stopTimer } from './timer'
+import { updateTray } from './tray'
 
 interface ActiveFocus {
   focusSession: FocusSession
@@ -47,6 +48,7 @@ export function startFocus(config: StartFocusConfig): FocusSession {
     const remaining = Math.max(0, activeFocus.targetMs - elapsed)
 
     broadcast('focus:tick', { remaining, elapsed, focusSession: activeFocus.focusSession })
+    updateTray()
 
     if (remaining <= 0) {
       completeFocusInternal()

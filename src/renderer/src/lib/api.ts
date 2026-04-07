@@ -1,5 +1,6 @@
 import type {
   Project,
+  Client,
   Session,
   FocusSession,
   FocusState,
@@ -9,6 +10,8 @@ import type {
   AppRule,
   CreateProjectData,
   UpdateProjectData,
+  CreateClientData,
+  UpdateClientData,
   CreateSessionData,
   UpdateSessionData,
   SessionFilters,
@@ -37,6 +40,11 @@ const api = window.api as {
   getDailyReport: (date: string) => Promise<DailyReport>
   getWeeklyReport: (startDate: string) => Promise<WeeklyReport>
   exportCSV: (filters: ReportFilters) => Promise<string | null>
+
+  getClients: () => Promise<Client[]>
+  createClient: (data: CreateClientData) => Promise<Client>
+  updateClient: (id: string, data: UpdateClientData) => Promise<Client>
+  deleteClient: (id: string) => Promise<void>
 
   getSetting: (key: string) => Promise<string | null>
   setSetting: (key: string, value: string) => Promise<void>

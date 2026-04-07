@@ -3,6 +3,7 @@ import { registerSessionHandlers } from './sessions'
 import { registerFocusHandlers } from './focus'
 import { registerReportHandlers } from './reports'
 import { registerSettingsHandlers } from './settings'
+import { registerClientHandlers } from './clients'
 
 export function registerAllIpcHandlers(): void {
   registerProjectHandlers()
@@ -10,4 +11,5 @@ export function registerAllIpcHandlers(): void {
   registerFocusHandlers()
   registerReportHandlers()
   registerSettingsHandlers()
+  registerClientHandlers()
 }

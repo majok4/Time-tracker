@@ -27,6 +27,12 @@ const api = {
   getWeeklyReport: (startDate: string) => ipcRenderer.invoke('reports:getWeekly', startDate),
   exportCSV: (filters: unknown) => ipcRenderer.invoke('reports:exportCSV', filters),
 
+  // Clients
+  getClients: () => ipcRenderer.invoke('clients:getAll'),
+  createClient: (data: unknown) => ipcRenderer.invoke('clients:create', data),
+  updateClient: (id: string, data: unknown) => ipcRenderer.invoke('clients:update', id, data),
+  deleteClient: (id: string) => ipcRenderer.invoke('clients:delete', id),
+
   // Settings
   getSetting: (key: string) => ipcRenderer.invoke('settings:get', key),
   setSetting: (key: string, value: string) => ipcRenderer.invoke('settings:set', key, value),

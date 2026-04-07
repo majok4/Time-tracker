@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Session, FocusSession, Project, TimerState, FocusState } from '../../../shared/types'
+import type { Session, FocusSession, Project, Client, TimerState, FocusState } from '../../../shared/types'
 
 interface Toast {
   id: string
@@ -23,6 +23,10 @@ interface AppState {
   // Projects cache
   projects: Project[]
   setProjects: (projects: Project[]) => void
+
+  // Clients cache
+  clients: Client[]
+  setClients: (clients: Client[]) => void
 
   // Toasts
   toasts: Toast[]
@@ -48,6 +52,9 @@ export const useAppStore = create<AppState>((set) => ({
 
   projects: [],
   setProjects: (projects) => set({ projects }),
+
+  clients: [],
+  setClients: (clients) => set({ clients }),
 
   toasts: [],
   addToast: (toast) => {

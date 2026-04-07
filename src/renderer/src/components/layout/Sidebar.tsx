@@ -1,10 +1,11 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, FolderKanban, BarChart2, Zap, Settings } from 'lucide-react'
+import { LayoutDashboard, FolderKanban, BarChart2, Zap, Settings, Users } from 'lucide-react'
 import { cn } from '../../lib/utils'
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/projects', icon: FolderKanban, label: 'Projects' },
+  { to: '/clients', icon: Users, label: 'Clients' },
   { to: '/reports', icon: BarChart2, label: 'Reports' },
   { to: '/focus', icon: Zap, label: 'Focus' }
 ]

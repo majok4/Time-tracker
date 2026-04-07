@@ -14,6 +14,7 @@ function toSession(row: Record<string, unknown>): Session {
     source: row.source as 'manual' | 'auto' | 'focus',
     appName: row.app_name as string | null,
     windowTitle: row.window_title as string | null,
+    title: row.title as string | null,
     startedAt: row.started_at as number,
     endedAt: row.ended_at as number | null,
     duration: row.duration as number | null,
@@ -38,13 +39,14 @@ export function createSession(data: CreateSessionData): Session {
   const now = Date.now()
   const id = randomUUID()
   db.prepare(
-    'INSERT INTO sessions (id, project_id, source, app_name, window_title, started_at) VALUES (?, ?, ?, ?, ?, ?)'
+    'INSERT INTO sessions (id, project_id, source, app_name, window_title, title, started_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
   ).run(
     id,
     data.projectId,
     data.source ?? 'manual',
     data.appName ?? null,
     data.windowTitle ?? null,
+    data.title ?? null,
     now
   )
   return getSessionById(id)!
@@ -69,6 +71,10 @@ export function updateSession(id: string, data: UpdateSessionData): Session | nu
   const updates: string[] = []
   const values: unknown[] = []
 
+  if (data.title !== undefined) {
+    updates.push('title = ?')
+    values.push(data.title)
+  }
   if (data.notes !== undefined) {
     updates.push('notes = ?')
     values.push(data.notes)

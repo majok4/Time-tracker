@@ -1,9 +1,20 @@
+export interface Client {
+  id: string
+  name: string
+  color: string
+  createdAt: number
+  updatedAt: number
+}
+
 export interface Project {
   id: string
   name: string
   color: string
   icon: string | null
   isArchived: boolean
+  clientId: string | null
+  goalHours: number | null
+  goalPeriod: 'week' | 'month' | null
   createdAt: number
   updatedAt: number
 }
@@ -14,6 +25,7 @@ export interface Session {
   source: 'manual' | 'auto' | 'focus'
   appName: string | null
   windowTitle: string | null
+  title: string | null
   startedAt: number
   endedAt: number | null
   duration: number | null
@@ -73,6 +85,8 @@ export interface ProjectStat {
   color: string
   totalMs: number
   percentage: number
+  goalHours: number | null
+  goalPeriod: 'week' | 'month' | null
 }
 
 export interface DayStat {
@@ -81,10 +95,23 @@ export interface DayStat {
   byProject: ProjectStat[]
 }
 
+export interface CreateClientData {
+  name: string
+  color: string
+}
+
+export interface UpdateClientData {
+  name?: string
+  color?: string
+}
+
 export interface CreateProjectData {
   name: string
   color: string
   icon?: string | null
+  clientId?: string | null
+  goalHours?: number | null
+  goalPeriod?: 'week' | 'month' | null
 }
 
 export interface UpdateProjectData {
@@ -92,6 +119,9 @@ export interface UpdateProjectData {
   color?: string
   icon?: string | null
   isArchived?: boolean
+  clientId?: string | null
+  goalHours?: number | null
+  goalPeriod?: 'week' | 'month' | null
 }
 
 export interface CreateSessionData {
@@ -99,9 +129,11 @@ export interface CreateSessionData {
   source?: 'manual' | 'auto' | 'focus'
   appName?: string | null
   windowTitle?: string | null
+  title?: string | null
 }
 
 export interface UpdateSessionData {
+  title?: string | null
   notes?: string | null
   projectId?: string
   startedAt?: number

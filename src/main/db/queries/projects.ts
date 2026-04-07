@@ -9,6 +9,9 @@ function toProject(row: Record<string, unknown>): Project {
     color: row.color as string,
     icon: row.icon as string | null,
     isArchived: Boolean(row.is_archived),
+    clientId: row.client_id as string | null,
+    goalHours: row.goal_hours as number | null,
+    goalPeriod: row.goal_period as 'week' | 'month' | null,
     createdAt: row.created_at as number,
     updatedAt: row.updated_at as number
   }
@@ -33,8 +36,8 @@ export function createProject(data: CreateProjectData): Project {
   const now = Date.now()
   const id = randomUUID()
   db.prepare(
-    'INSERT INTO projects (id, name, color, icon, is_archived, created_at, updated_at) VALUES (?, ?, ?, ?, 0, ?, ?)'
-  ).run(id, data.name, data.color, data.icon ?? null, now, now)
+    'INSERT INTO projects (id, name, color, icon, is_archived, client_id, goal_hours, goal_period, created_at, updated_at) VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, ?)'
+  ).run(id, data.name, data.color, data.icon ?? null, data.clientId ?? null, data.goalHours ?? null, data.goalPeriod ?? null, now, now)
   return getProjectById(id)!
 }
 
@@ -61,6 +64,18 @@ export function updateProject(id: string, data: UpdateProjectData): Project | nu
   if (data.isArchived !== undefined) {
     updates.push('is_archived = ?')
     values.push(data.isArchived ? 1 : 0)
+  }
+  if (data.clientId !== undefined) {
+    updates.push('client_id = ?')
+    values.push(data.clientId)
+  }
+  if (data.goalHours !== undefined) {
+    updates.push('goal_hours = ?')
+    values.push(data.goalHours)
+  }
+  if (data.goalPeriod !== undefined) {
+    updates.push('goal_period = ?')
+    values.push(data.goalPeriod)
   }
 
   if (updates.length === 0) return project

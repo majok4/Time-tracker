@@ -59,6 +59,28 @@ const MIGRATIONS: Array<{ version: number; up: string }> = [
       INSERT OR IGNORE INTO settings (key, value) VALUES ('focus_break_duration', '300000');
       INSERT OR IGNORE INTO settings (key, value) VALUES ('theme', 'dark');
     `
+  },
+  {
+    version: 2,
+    up: `
+      ALTER TABLE sessions ADD COLUMN title TEXT;
+    `
+  },
+  {
+    version: 3,
+    up: `
+      CREATE TABLE IF NOT EXISTS clients (
+        id         TEXT PRIMARY KEY,
+        name       TEXT NOT NULL,
+        color      TEXT NOT NULL DEFAULT '#6366F1',
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      );
+
+      ALTER TABLE projects ADD COLUMN client_id TEXT REFERENCES clients(id) ON DELETE SET NULL;
+      ALTER TABLE projects ADD COLUMN goal_hours REAL;
+      ALTER TABLE projects ADD COLUMN goal_period TEXT;
+    `
   }
 ]
 

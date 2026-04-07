@@ -19,9 +19,13 @@ function ProjectForm({
   onSave: (data: CreateProjectData) => Promise<void>
   onCancel: () => void
 }): JSX.Element {
+  const { clients } = useAppStore()
   const [name, setName] = useState(initial?.name ?? '')
   const [color, setColor] = useState(initial?.color ?? PROJECT_COLORS[0])
   const [icon, setIcon] = useState(initial?.icon ?? '')
+  const [clientId, setClientId] = useState<string | null>(initial?.clientId ?? null)
+  const [goalHours, setGoalHours] = useState<string>(initial?.goalHours?.toString() ?? '')
+  const [goalPeriod, setGoalPeriod] = useState<'week' | 'month'>(initial?.goalPeriod ?? 'month')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -29,7 +33,14 @@ function ProjectForm({
     e.preventDefault()
     if (!name.trim()) { setError('Name is required'); return }
     setSaving(true)
-    await onSave({ name: name.trim(), color, icon: icon || null })
+    await onSave({
+      name: name.trim(),
+      color,
+      icon: icon || null,
+      clientId: clientId || null,
+      goalHours: goalHours ? parseFloat(goalHours) : null,
+      goalPeriod: goalHours ? goalPeriod : null
+    })
     setSaving(false)
   }
 
@@ -77,6 +88,64 @@ function ProjectForm({
               {i}
             </button>
           ))}
+        </div>
+      </div>
+
+      {clients.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <label className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Client (optional)</label>
+          <select
+            value={clientId ?? ''}
+            onChange={(e) => setClientId(e.target.value || null)}
+            className="text-sm px-3 py-2 rounded-lg border outline-none"
+            style={{
+              background: 'var(--bg-primary)',
+              borderColor: 'var(--border)',
+              color: 'var(--text-primary)'
+            }}
+          >
+            <option value="">No client</option>
+            {clients.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      <div className="flex flex-col gap-2">
+        <label className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Goal (optional)</label>
+        <div className="flex gap-2">
+          <input
+            type="number"
+            min="0"
+            step="0.5"
+            value={goalHours}
+            onChange={(e) => setGoalHours(e.target.value)}
+            placeholder="e.g. 20"
+            className="flex-1 text-sm px-3 py-2 rounded-lg border outline-none"
+            style={{
+              background: 'var(--bg-primary)',
+              borderColor: 'var(--border)',
+              color: 'var(--text-primary)'
+            }}
+          />
+          <span className="text-sm self-center" style={{ color: 'var(--text-muted)' }}>hrs /</span>
+          <div className="flex rounded-lg border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
+            {(['week', 'month'] as const).map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setGoalPeriod(p)}
+                className="px-3 py-2 text-xs font-medium transition-colors"
+                style={{
+                  background: goalPeriod === p ? 'var(--accent)' : 'var(--bg-primary)',
+                  color: goalPeriod === p ? 'white' : 'var(--text-muted)'
+                }}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -220,6 +289,9 @@ function ProjectRow({
   onArchive: () => void
   onDelete: () => void
 }): JSX.Element {
+  const { clients } = useAppStore()
+  const client = project.clientId ? clients.find((c) => c.id === project.clientId) : null
+
   return (
     <div
       className="flex items-center gap-3 p-3 rounded-xl border group transition-colors hover:bg-hover"
@@ -235,7 +307,21 @@ function ProjectRow({
         <p className="font-medium text-sm truncate" style={{ color: 'var(--text-primary)' }}>
           {project.name}
         </p>
-        <Badge label={project.color} color={project.color} />
+        <div className="flex items-center gap-2 mt-0.5">
+          {client && (
+            <span
+              className="text-xs px-1.5 py-0.5 rounded-md font-medium"
+              style={{ background: client.color + '22', color: client.color }}
+            >
+              {client.name}
+            </span>
+          )}
+          {project.goalHours && (
+            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+              {project.goalHours}h/{project.goalPeriod}
+            </span>
+          )}
+        </div>
       </div>
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         <button onClick={onEdit} className="p-1.5 rounded-lg hover:bg-hover" title="Edit" style={{ color: 'var(--text-muted)' }}>
